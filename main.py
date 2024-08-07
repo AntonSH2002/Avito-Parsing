@@ -70,10 +70,13 @@ for i in range(1):
                     EC.presence_of_element_located((By.CSS_SELECTOR, "span.styles-module-size_xxxl-GRUMY")))
                 WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, "span.style-item-address__string-wt61A")))
+                WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "span[data-marker='item-view/item-date']")))
 
                 title = driver.find_element(By.CSS_SELECTOR, "h1[itemprop='name']").text
                 price = driver.find_element(By.CSS_SELECTOR, "span.styles-module-size_xxxl-GRUMY").text
                 address = driver.find_element(By.CSS_SELECTOR, "span.style-item-address__string-wt61A").text
+                publication_date = driver.find_element(By.CSS_SELECTOR, "span[data-marker='item-view/item-date']").text
 
                 corrected_address = correct_address(address)
                 if not corrected_address:
@@ -97,7 +100,8 @@ for i in range(1):
                             "Цена": price,
                             "Ссылка": url,
                             "Адрес": corrected_address,
-                            "Кадастровый номер": cadastral_id
+                            "Кадастровый номер": cadastral_id,
+                            "Дата публикации": publication_date
                         }
                     else:
                         temp_data = {
@@ -105,6 +109,7 @@ for i in range(1):
                             "Цена": price,
                             "Ссылка": url,
                             "Адрес": corrected_address,
+                            "Дата публикации": publication_date
                         }
                 else:
                     temp_data = {
@@ -112,6 +117,7 @@ for i in range(1):
                         "Цена": price,
                         "Ссылка": url,
                         "Адрес": corrected_address,
+                        "Дата публикации": publication_date
                     }
 
                 parameters = driver.find_elements(By.CLASS_NAME, "params-paramsList__item-_2Y2O")
