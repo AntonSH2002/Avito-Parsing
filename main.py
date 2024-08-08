@@ -17,32 +17,27 @@ geolocator = Nominatim(user_agent="GetLoc")
 rosreestr_api_client = PKKRosreestrAPIClient()
 
 
-def correct_address(address):
-    if "мкр-н" in address or "пр-т" in address:
-        return None
-
-    if "тракт." in address:
-        address = address.replace("тракт.", "тракт ")
-
-    if "тракт" in address:
-        parts = address.split(", ")
-        for i, part in enumerate(parts):
-            if "тракт" in part:
-                parts[i] = part.replace("тракт ", "") + " тракт"
-        address = ", ".join(parts)
+def process_address(address):
+    if "мкр-н" in address:
+        address = ', '.join(part for part in address.split(', ') if "мкр-н" not in part)
 
     if "пр-т" in address:
         address = address.replace("пр-т", "проспект")
 
-    if "д." in address:
-        address = address.replace("д.", "")
-    if "корп." in address:
-        address = address.replace("корп.", "к")
+    if "тракт." in address:
+        address = address.replace("тракт.", "").strip()
+        parts = address.split(',')
+        if len(parts) >= 2:
+            address = f"{parts[0].strip()} тракт, {parts[1].strip()}"
+        if len(parts) == 3:
+            address = f"{address.split(',')[0].strip()} {parts[1].strip()} к{parts[2].strip()}"
+
+    address = address.replace("д.", "").replace(" корп.", " к").strip()
 
     return address
 
 
-for i in range(1, 3):
+for i in range(1, 6):
     driver.get(f"https://www.avito.ru/altayskiy_kray/kvartiry/prodam-ASgBAgICAUSSA8YQ?cd=1&context=H4sIAAAAAAAA_0q0MrSqLraysFJKK8rPDUhMT1WyLrYyt1JKTixJzMlPV7KuBQQAAP__dhSE3CMAAAA&p={i}")
 
     try:
@@ -76,14 +71,9 @@ for i in range(1, 3):
                 price = driver.find_element(By.CSS_SELECTOR, "span.styles-module-size_xxxl-GRUMY").text
                 address = driver.find_element(By.CSS_SELECTOR, "span.style-item-address__string-wt61A").text
 
-                corrected_address = correct_address(address)
-                if not corrected_address:
-                    driver.back()
-                    WebDriverWait(driver, 10).until(
-                        EC.presence_of_all_elements_located((By.XPATH, "//div[@data-marker='item']")))
-                    continue
+                processed_address = process_address(address)
 
-                location = geolocator.geocode(corrected_address, timeout=10)
+                location = geolocator.geocode(processed_address, timeout=10)
 
                 temp_data = {}
 
@@ -96,7 +86,7 @@ for i in range(1, 3):
                             "Название": title,
                             "Цена": price,
                             "Ссылка": url,
-                            "Адрес": corrected_address,
+                            "Адрес": processed_address,
                             "Кадастровый номер": cadastral_id,
                         }
                     else:
@@ -104,14 +94,14 @@ for i in range(1, 3):
                             "Название": title,
                             "Цена": price,
                             "Ссылка": url,
-                            "Адрес": corrected_address,
+                            "Адрес": processed_address,
                         }
                 else:
                     temp_data = {
                         "Название": title,
                         "Цена": price,
                         "Ссылка": url,
-                        "Адрес": corrected_address,
+                        "Адрес": processed_address,
                     }
 
                 parameters = driver.find_elements(By.CLASS_NAME, "params-paramsList__item-_2Y2O")
