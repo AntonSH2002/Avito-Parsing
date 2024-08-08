@@ -6,6 +6,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from geopy.geocoders import Nominatim
 from rosreestr_api.clients.rosreestr import PKKRosreestrAPIClient
+import undetected_chromedriver as uc
 
 driver = webdriver.Firefox()
 
@@ -37,12 +38,12 @@ def correct_address(address):
         address = address.replace("д.", "")
     if "корп." in address:
         address = address.replace("корп.", "к")
+
     return address
 
 
-for i in range(1):
-    driver.get(
-        f"https://www.avito.ru/barnaul/kvartiry/prodam-ASgBAgICAUSSA8YQ?cd=1&context=H4sIAAAAAAAA_0q0MrSqLraysFJKK8rPDUhMT1WyLrYysVLKTczMU7KuBQQAAP__w5qblCAAAAA&p={i}")
+for i in range(1, 3):
+    driver.get(f"https://www.avito.ru/altayskiy_kray/kvartiry/prodam-ASgBAgICAUSSA8YQ?cd=1&context=H4sIAAAAAAAA_0q0MrSqLraysFJKK8rPDUhMT1WyLrYyt1JKTixJzMlPV7KuBQQAAP__dhSE3CMAAAA&p={i}")
 
     try:
         WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, "//div[@data-marker='item']")))
@@ -70,17 +71,13 @@ for i in range(1):
                     EC.presence_of_element_located((By.CSS_SELECTOR, "span.styles-module-size_xxxl-GRUMY")))
                 WebDriverWait(driver, 10).until(
                     EC.presence_of_element_located((By.CSS_SELECTOR, "span.style-item-address__string-wt61A")))
-                WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, "span[data-marker='item-view/item-date']")))
 
                 title = driver.find_element(By.CSS_SELECTOR, "h1[itemprop='name']").text
                 price = driver.find_element(By.CSS_SELECTOR, "span.styles-module-size_xxxl-GRUMY").text
                 address = driver.find_element(By.CSS_SELECTOR, "span.style-item-address__string-wt61A").text
-                publication_date = driver.find_element(By.CSS_SELECTOR, "span[data-marker='item-view/item-date']").text
 
                 corrected_address = correct_address(address)
                 if not corrected_address:
-                    print(f"Объявление {j} с адресом {address} было удалено.")
                     driver.back()
                     WebDriverWait(driver, 10).until(
                         EC.presence_of_all_elements_located((By.XPATH, "//div[@data-marker='item']")))
@@ -101,7 +98,6 @@ for i in range(1):
                             "Ссылка": url,
                             "Адрес": corrected_address,
                             "Кадастровый номер": cadastral_id,
-                            "Дата публикации": publication_date
                         }
                     else:
                         temp_data = {
@@ -109,7 +105,6 @@ for i in range(1):
                             "Цена": price,
                             "Ссылка": url,
                             "Адрес": corrected_address,
-                            "Дата публикации": publication_date
                         }
                 else:
                     temp_data = {
@@ -117,7 +112,6 @@ for i in range(1):
                         "Цена": price,
                         "Ссылка": url,
                         "Адрес": corrected_address,
-                        "Дата публикации": publication_date
                     }
 
                 parameters = driver.find_elements(By.CLASS_NAME, "params-paramsList__item-_2Y2O")
